@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ${CONTAINER_NAME}
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ${CONTAINER_NAME}
+  template:
+    metadata:
+      labels:
+        app: ${CONTAINER_NAME}
+    spec:
+      containers:
+      - name: caldera-server
+        image: ${CONTAINER_IMAGE}
+        ports:
+        - containerPort: 8888 # Web UI
+        - containerPort: 5000 # MCP MLflow Server
+        - containerPort: 7010 # Sandcat TCP
+        - containerPort: 7011 # Sandcat UDP
+        - containerPort: 7012 # SSH Agents
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ${CONTAINER_NAME}-svc
+  namespace: default
+spec:
+  selector:
+    app: ${CONTAINER_NAME}
+  ports:
+    - name: web-ui
+      protocol: TCP
+      port: 8888
+      targetPort: 8888
+    - name: mcp-mlflow
+      protocol: TCP
+      port: 5000
+      targetPort: 5000
+    - name: agent-tcp
+      protocol: TCP
+      port: 7010
+      targetPort: 7010
+    - name: agent-udp
+      protocol: UDP
+      port: 7011
+      targetPort: 7011
+  type: ClusterIP
