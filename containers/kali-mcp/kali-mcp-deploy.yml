@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ${CONTAINER_NAME}
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ${CONTAINER_NAME}
+  template:
+    metadata:
+      labels:
+        app: ${CONTAINER_NAME}
+    spec:
+      containers:
+      - name: kali-mcp-server
+        image: ${CONTAINER_IMAGE}
+        ports:
+        - containerPort: 5000
+        # CRITICAL: These capabilities are required for tools like Nmap to run stealth/raw socket scans
+        securityContext:
+          capabilities:
+            add:
+              - NET_ADMIN
+              - NET_RAW
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ${CONTAINER_NAME}-svc
+  namespace: default
+spec:
+  selector:
+    app: ${CONTAINER_NAME}
+  ports:
+    - protocol: TCP
+      port: 5000
+      targetPort: 5000
+  type: ClusterIP
